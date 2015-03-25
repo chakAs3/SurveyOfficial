@@ -191,6 +191,158 @@ query.findOne(function(err, loc){
 	});
 };
 
+
+exports.dynamicGenerateReport = function(req, res) {
+
+
+    // this type of object should be sent in request
+
+    // questionId :5502cd1d53d5f66d42fc99e9  for food quality
+
+    // questionId :550009d453d5f66d42fc99e8  for visiting
+    console.log(req.body);
+    var objectParam  =  req.body ;
+
+    /*objectParam = {brandId:"54f722f59a66644803c12897",
+     questionId: "550009d453d5f66d42fc99e8",
+     //shifts:[{value:"breakfast",from:5,to:12},{value:"lunch",from:12,to:18},{value:"dinner",from:18,to:23},{value:"brunch",from:0,to:4}] ,
+     choices:["first","second"]
+     //days:["Thu","Wed","Mon","Sun","Fri","Sat"]
+     // type:"avg"
+     };*/
+
+
+
+    var query ={};
+
+    if(objectParam.brandId)
+        query.brandId = {"$in":objectParam.brandId};
+    if(objectParam.questionId)
+        query["responses.data.questionId"] = objectParam.questionId;
+
+    //  create map and reduce
+    var object = new Object();
+    var mapper = function() {
+
+        var res = this.responses ;
+
+        for (var idx = 0; idx < res[0].data.length; idx++) {
+            //var key = this.items[idx].sku;
+            var value = {
+                value: res[0].data[idx].value,
+                questionId: res[0].data[idx].questionId,
+                timeTaken:res[0].data[idx].timeTaken
+
+            };
+            //if(this.brandId == questionObject.brandId || questionObject.brandId == null )
+            if(value.questionId == questionObject.questionId)
+                emit(this.locationId, value);
+        }
+
+    };
+    object.map = mapper  ;
+
+    object.query  = query ;//{brandId:ObjectId(objectParam.brandId)};//{brandId:{$in:[ObjectId(objectParam.brandId)]}};
+
+    object.scope={questionObject:objectParam};
+
+    object.reduce = function(key,questions){
+
+        var reduce = {count:0,values:[]} ;
+
+        var series ;
+
+        for ( var i=0 ; i < questions.length ; i++){
+
+            //  if(questions[i].questionId == questionObject.questionId){ // only on selected question
+
+            if(questionObject.type == "avg"){
+
+                reduce.values.push(questions[i].value);
+            }else if(questionObject.choices){
+                series = questionObject.choices
+                if(questionObject.choices.length == 0 || questionObject.choices.indexOf(questions[i].value)>-1)
+
+                    reduce.values.push(questions[i].value);
+
+            }else if(questionObject.days){ // pass days checking
+                series = questionObject.days
+                var day = questions[i].timeTaken.substr(0,3);
+                if( questionObject.days.indexOf(day)>-1)
+                    reduce.values.push(day);
+
+            }else if(questionObject.shifts){ // pass shift time in day
+
+                var d = new Date(questions[i].timeTaken)
+                series = []
+                for (var j=0 ; j < questionObject.shifts.length ; j++ ){
+                    series.push(questionObject.shifts[j].value);
+                    if(questionObject.shifts[j].from < d.getHours() && d.getHours() <= questionObject.shifts[j].to )
+                        reduce.values.push(questionObject.shifts[j].value );
+                }
+
+            }
+            reduce.count++;
+            // }
+        }
+        // reduce.valuesNrate = countValues(reduce.values);
+        /*   calculate occurences */
+        //  var countValues= function (arr) {
+        var arr =  reduce.values ;
+        if(questionObject.type == "avg"){
+            var sum=0;
+            for (var i = 0; i < arr.length; i++) {
+                sum +=  Number(arr[i]);
+            }
+            reduce.sum = sum ;
+        }else {
+            var a = series, b = [], prev;
+            for ( var t in series)
+            b[t] = 0
+
+            arr.sort();
+            for (var i = 0; i < arr.length; i++) {
+                var index = a.indexOf(arr[i])
+                if (index > -1 ) {
+
+                    b[index]++;
+                }
+            }
+
+            reduce.valuesNrate = [a, b];
+        }
+        // };
+        /*                               ***/
+
+
+
+        return reduce;
+    }
+
+    object.out = { replace: 'report_gen_rate' }
+    object.verbose = true;
+
+    Response.mapReduce(object, function (err, model, stats) {
+            console.log('receive model chakir ');
+        if(err) {
+            console.log(err);
+        }else
+            model.find().exec(function (err, docs) {
+                if(err){
+                    console.log(err);
+                }else {
+                    console.log(JSON.stringify(docs));
+                    res.send(docs);
+                }
+            });
+            console.log('map reduce took %d ms', stats.processtime);
+        }
+    );
+
+
+//res.end(" is DOne");
+};
+
 exports.testing = function(req, res) {
 
 

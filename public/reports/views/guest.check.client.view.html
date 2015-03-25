@@ -20,6 +20,10 @@
                 </div>
 
 
+              
+
+
+
 
 
 
@@ -28,14 +32,22 @@
 
 
                 <div>
+                  <form data-ng-submit="creating()" >
+
                     <ul>Locations in Brand
                         <li ng-repeat="x  in locationByBrand" ng-hide="!selectedBrand.length">
-                              {{ x.name }}  <input type="" name=""  id="" /> <input type="Button" value="Submit"  />
+                              {{ x.name }}
                         </li>
                     </ul>
+                    <input type="" data-ng-model="checks" id="checks" value="checks" />
+                    <input type="submit">
+                  </form>
                 </div>
               </div>
 
             </div>
           </div>
+
+
+
           </section>

@@ -1,15 +1,262 @@
+
 <div ng-include="'reports/views/partials/reports.client.header.html'"></div>
 <div ng-include="'../../layout/topnav.html'"></div>
+<section name="sidebar" ng-include="'reports/views/partials/reports.client.sidebar.html'"></section>
 
-<section name="sidebar" ng-include="'reports/views/partials/reports.client.sidebar.html'" >
+
+<section ng-controller="reportsController">
+
+
+   <div class="container" border="1">
+      <h3>Brands Summaray </h3>
+      <br>
+      <div class="row">
+
+         <div class="col-md-8">
+
+           <div class="col-md-4">
+
+
+            <h5>Brands</h5>
+            <multiselect2 data-ng-init="brandName()" class="input-xlarge" multiple="true" ng-model="selectedBrand" options="c.name for c in brand " change="selected()"></multiselect2>
+
+
+
+          </div>
+
+          <div class="col-md-6">
+              <h5>Locations</h5>
+              <multiselect2  class="input-xlarge" multiple="true" ng-model="locationByBrand" options="c.name for c in locationByBrand " change="selected()"></multiselect2>
+
+
+
+          </div>
+
+          <div class="col-md-2">       <h5>Month</h5>
+            <input id="dateInput" type="month" name="input_date" ng-model="value" placeholder="yyyy-MM" min="2015-01" max="2015-12" value="2015-03" required />
+
+
+          </div>
+
+
+
+
+
+        </div>
+
+        <div class="col-md-8">
+          <div class="col-md-4">       <h5>Questions</h5>
+            <multiselect2 data-ng-init="Questions()" class="input-xlarge" multiple="true" ng-model="selectedQuestion" options="c.titleEN for c in questions " change="selected()"></multiselect2>
+
+
+          </div>
+
+          <div class="col-md-2">       <h5>SurveyTypes</h5>
+            <multiselect2 data-ng-init="SurveyTypes()" class="input-xlarge" multiple="true" ng-model="SurveyTypes" options="item.name for item in surveyTypes " change="Questions()"></multiselect2>
+
+
+          </div>
+
+
+
+        </div>
+
+
+
+
+      </div> <br>
+
+
+
+            <div class="well well-small"  >
+              <div class="add-field">
+
+                  <button type="submit" class="btn" ng-click="addNewField()"><i class="icon-plus"></i> Add Question</button>
+              </div>
+              <hr>
+              <p ng-show="form.form_fields.length == 0">No questions added yet.</p>
+              <accordion close-others="accordion.oneAtATime" sv-root sv-part="form.form_fields" class="sortable-container" sv-on-sort="setOrder($partTo)">
+                  <accordion-group heading="{{field.field_titleEN}}" ng-repeat="field in form.form_fields" sv-element>
+                    <div class="accordion-edit">
+                        <button class="btn btn-danger pull-right" type="button" ng-click="dynamicGenerateReport(field)"><i class="icon-trash icon-white"></i>Generate</button>
+
+
+                        <div class="row" ng-hide="true">
+                            <div class="col-md-2">Question ID: </div>
+                            <div class="col-md-4">{{field.field_selectedQuestionID}}</div>
+                        </div>
+                        <div class="row" ng-hide="true">
+                            <div class="col-md-2">Brand ID: </div>
+                            <div class="col-md-4">{{field.field_brandID}}</div>
+                        </div>
+                        <div class="row" ng-hide="true">
+                            <div class="col-md-2">Question Type:</div>
+                            <div class="col-md-4">{{field.field_type}}</div>
+                        </div>
+
+
+                        <div class="clear" ng-hide="true"><hr></div>
+
+                        <div class="row" ng-model="offline" ng-show="offline">
+                            <div class="col-md-2">Chart Title :</div>
+                            <div class="col-md-4"><input type="textarea" ng-model="field.chartName"  value="{{field.chartName}}"></div>
+                        </div>
+                        <hr>
+                        <div class="row" ng-hide="true">
+                            <div class="col-md-2">Brands</div>
+                            <div class="col-md-4"><input type="textarea" ng-model="field.field_brands" disabled value="{{field.field_brands}}" width="auto"></div>
+                        </div>
+                        <hr ng-hide="true">
+                        <div class="row" ng-hide="true">
+                            <div class="col-md-2">Locations</div>
+                            <div class="col-md-4"><input type="textarea" ng-model="field.field_locations" disabled value="{{field.field_locations}}"></div>
+                        </div>
+                        <hr ng-hide="true">
+
+                        <div class="row" ng-show="offline">
+                            <div class="col-md-6">
+                            <div class="col-md-2">Options:</div>
+                            <input type="radio" id="client_days" name="client" ng-model="field.entry.client" ng-required="true" value="days" />
+                            <label for="client_days">Days</label>
+
+                            <input type="radio" id="client_shifts" name="client" ng-model="field.entry.client" ng-required="true" value="shifts" />
+                            <label for="client_shifts">Shifts</label>
+
+                            <input type="radio" id="client_choices" name="client" ng-model="field.entry.client" ng-required="true" value="choices" />
+                            <label for="client_choices">Choices</label>
+
+                           <input type="radio" id="client_all" name="client" ng-model="field.entry.client" ng-required="true" value="avg" />
+                            <label for="client_choices">Avg</label>
+                            </div>
+
+                            <div class="col-md-6" >
+                            <div class="col-md-4">Values type: </div>
+                            <input type="radio" id="client_rate" name="vType" ng-model="field.entry.valueType" ng-required="true" ng-value="true" value="rate" />
+                            <label for="client_days">Rate</label>
+                            <input type="radio" id="client_percentage" name="vType" ng-model="field.entry.valueType" ng-required="true" value="percentage" />
+                            <label for="client_days">Percentage</label>
+
+                            </div>
+                        </div>
+                        <hr>
+
+
+
+
+                        <div class="row" ng-show="offline">
+
+
+                            <div class="col-md-2" ng-hide="field.entry.client!='choices'" ng-show="entry.client=='all'">
+                                <h5>Choices</h5>
+                                </div>
+                            <div class="col-md-4" ng-hide="field.entry.client!='choices'" ng-show="entry.client=='all'">
+                                <multiselect2  class="input-xlarge" data-ng-init='QuestionsChoices(field)' multiple="true" ng-model="field.selectedChoices" options="c.textEN for c in choicesMade" change="selected(field)" ></multiselect2>
+
+                            </div>
+
+
+
+
+
+
+
+                            <div class="col-md-2" ng-hide="field.entry.client!='days'" ng-show="entry.client=='all'">
+
+                              <h5> Days </h5>
+                              <label ng-repeat="day in days">
+                                <!--
+                                  - use `value="{{fruit.name}}"` to give the input a real value, in case the form gets submitted
+                                    traditionally
+
+                                  - use `ng-checked="fruit.selected"` to have the checkbox checked based on some angular expression
+                                    (no two-way-data-binding)
+
+                                  - use `ng-model="fruit.selected"` to utilize two-way-data-binding. Note that `.selected`
+                                    is arbitrary. The property name could be anything and will be created on the object if not present.
+                                -->
+                                <input
+                                  type="checkbox"
+                                  name="selectedDays[]"
+                                  value="{{day.name}}"
+                                  ng-model="day.selected"
+                                > {{day.name}}<br>
+                              </label>
+
+                            </div>
+
+                            <div class="col-md-2" ng-hide="field.entry.client!='shifts'" ng-show="entry.client=='all'">
+                              <h5> Shifts </h5>
+                              <label ng-repeat="shift in shifts">
+                                <!--
+                                  - use `value="{{fruit.name}}"` to give the input a real value, in case the form gets submitted
+                                    traditionally
+
+                                  - use `ng-checked="fruit.selected"` to have the checkbox checked based on some angular expression
+                                    (no two-way-data-binding)
+
+                                  - use `ng-model="fruit.selected"` to utilize two-way-data-binding. Note that `.selected`
+                                    is arbitrary. The property name could be anything and will be created on the object if not present.
+                                -->
+                                <input
+                                  type="checkbox"
+                                  name="selectedshifts[]"
+                                  value="{{shift.name}}"
+                                  ng-model="shift.selected"
+                                > {{shift.name}}
+                              </label>
+
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+
+                            <div class="col-md-2">Charts</div>
+                            <div class="demo-section k-content">
+                                  <div id="Chart{{field.field_id}}"></div>
+                                    </div>
+                        </div>
+                        <hr>
+
+
+
+            </div>
+
+
+
+         </div>
+
+       <div id="combinedChart" class="well well-small"  >
+
+
+           <div class="col-md-4"><h4>Combined Chart average</h4></div>
+           <div class="col-md-6">
+
+
+               <div class="col-md-4"><h5>Charts:</h5></div>
+               <multiselect2 data-ng-init="averageFields()" class="input-xlarge" multiple="true" ng-model="chartsToCombine" options="c.field_id as c.chartName +' : '+c.entry.client for c in averageFields()" change="selected()"></multiselect2>
+           </div>
+           <button class="btn btn-danger pull-right" type="button" ng-show="form.form_fields.length!=0" ng-click="generateCombinedChart()"><i class="icon-trash icon-white"></i>Generate</button>
+
+           <hr>
+           <p ng-show="form.form_fields.length == 0">No chart added yet.</p>
+           <div class="charts-container">
+
+           </div>
+       </div>
+
+           <div class="box-col">
+               <button class='export-pdf k-button'  >Export as PDF</button>
+           </div>
+      </div>
+
+
+
+
+
+   </div>
+
+
+
+
 </section>
 
-        <section ng-controller="reportsController">
-          <div class="container">
-            <div class="row">
-              <div class="col-md-6">
-                   <h1>Brand Summaray</h1>
-              </div>
-            </div>
-          </div>
-        </section>

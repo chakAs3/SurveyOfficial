@@ -16,6 +16,11 @@ module.exports = function(app) {
 		   .get(reports.generateMonthlyParticipationRate);
 
 
+    app.route('/api/reports/dynamic')
+        .post(reports.dynamicGenerateReport)
+        .get(reports.dynamicGenerateReport);
+
+
 
     app.route('/api/reports/monthly/testing')// test report by question ( avg , count)
 				   .get(reports.testing);
